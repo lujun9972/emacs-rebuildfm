@@ -90,6 +90,12 @@ to open mp3 URL."
 
 (defun rebuildfm--parse-feed (buf)
   (with-current-buffer buf
+    (let ((cs (nnrss-get-encoding)))
+      (when cs
+        (insert (prog1
+                    (decode-coding-string (buffer-string) cs)
+                  (erase-buffer)
+                  (mm-enable-multibyte)))))
     (let* ((feed (xml-parse-region (point-min) (point-max)))
            (items (nnrss-find-el 'item feed)))
       (mapcar #'rebuildfm--construct-item items))))
@@ -100,12 +106,6 @@ to open mp3 URL."
       (unless response-buf
         (error "Can't get '%s'" url))
       (rebuildfm--remove-response-header response-buf)
-      (let ((cs (nnrss-get-encoding)))
-        (when cs
-          (insert (prog1
-                      (decode-coding-string (buffer-string) cs)
-                    (erase-buffer)
-                    (mm-enable-multibyte)))))
       (rebuildfm--parse-feed response-buf))))
 
 (defun rebuildfm--collect-podcasts ()
