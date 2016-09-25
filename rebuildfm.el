@@ -89,7 +89,7 @@ to open mp3 URL."
 
 (defun rebuildfm--parse-feed (buf)
   (with-current-buffer buf
-    (let ((feed (libxml-parse-xml-region (point-min) (point-max))))
+    (let ((feed (xml-parse-region (point-min) (point-max))))
       (let* ((rss (cdr feed))
              (channel (cdr (assoc-default 'channel rss))))
         (cl-loop for elm in channel
