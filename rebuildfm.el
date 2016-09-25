@@ -36,6 +36,7 @@
 (require 'xml)
 (require 'url)
 (require 'cl-lib)
+(require 'nnrss)
 
 (declare-function do-applescript "nsfns.m")
 
@@ -89,12 +90,9 @@ to open mp3 URL."
 
 (defun rebuildfm--parse-feed (buf)
   (with-current-buffer buf
-    (let ((feed (xml-parse-region (point-min) (point-max))))
-      (let* ((rss (cdr feed))
-             (channel (cdr (assoc-default 'channel rss))))
-        (cl-loop for elm in channel
-                 when (and (listp elm) (eq (car elm) 'item))
-                 collect (rebuildfm--construct-item elm))))))
+    (let* ((feed (xml-parse-region (point-min) (point-max)))
+           (items (nnrss-find-el 'item feed)))
+      (mapcar #'rebuildfm--construct-item items))))
 
 (defun rebuildfm--get-feeds (url)
   (let ((url-request-method "GET"))
@@ -102,6 +100,12 @@ to open mp3 URL."
       (unless response-buf
         (error "Can't get '%s'" url))
       (rebuildfm--remove-response-header response-buf)
+      (let ((cs (nnrss-get-encoding)))
+        (when cs
+          (insert (prog1
+                      (decode-coding-string (buffer-string) cs)
+                    (erase-buffer)
+                    (mm-enable-multibyte)))))
       (rebuildfm--parse-feed response-buf))))
 
 (defun rebuildfm--collect-podcasts ()
